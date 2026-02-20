@@ -234,7 +234,7 @@ fn spawn_stream_pipeline(
     });
 
     // Tokio task: Deepgram WS
-    tokio::spawn(async move {
+    tauri::async_runtime::spawn(async move {
         deepgram_client::run_deepgram_stream(
             source,
             config,
@@ -248,7 +248,7 @@ fn spawn_stream_pipeline(
 
     // Tokio task: forward transcripts to Tauri events
     let app_for_transcripts = app_handle.clone();
-    tokio::spawn(async move {
+    tauri::async_runtime::spawn(async move {
         let event_name = match source {
             AudioSource::Mic => "mic-transcript",
             AudioSource::System => "system-transcript",
@@ -259,7 +259,7 @@ fn spawn_stream_pipeline(
     });
 
     // Tokio task: forward connection status to Tauri events
-    tokio::spawn(async move {
+    tauri::async_runtime::spawn(async move {
         while let Some(status) = status_rx.recv().await {
             let _ = app_handle.emit("connection-status", &status);
         }
