@@ -105,20 +105,19 @@ impl SystemAudioCapture for MacosSystemCapture {
             }
 
             // Capture entire display audio (no per-app filtering)
-            let filter = SCContentFilter::builder()
-                .display(&displays[0])
-                .exclude_windows(&[])
+            let filter = SCContentFilter::create()
+                .with_display(&displays[0])
+                .with_excluding_windows(&[])
                 .build();
 
             // Minimal 2x2 video resolution — SCK requires a display filter even for
             // audio-only capture, so we minimize the video overhead.
-            let config = SCStreamConfiguration::builder()
-                .width(2)
-                .height(2)
-                .captures_audio(true)
-                .sample_rate(SAMPLE_RATE as i32)
-                .channel_count(CHANNELS as i32)
-                .build();
+            let config = SCStreamConfiguration::new()
+                .with_width(2)
+                .with_height(2)
+                .with_captures_audio(true)
+                .with_sample_rate(SAMPLE_RATE as i32)
+                .with_channel_count(CHANNELS as i32);
 
             let mut stream = SCStream::new(&filter, &config);
 
