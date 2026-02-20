@@ -23,6 +23,21 @@ function statusColor(status: ConnectionStatus): string {
   }
 }
 
+function statusLabel(status: ConnectionStatus): string {
+  switch (status) {
+    case "connected":
+      return "Connected";
+    case "connecting":
+      return "Connecting...";
+    case "reconnecting":
+      return "Reconnecting...";
+    case "failed":
+      return "Failed";
+    default:
+      return "Disconnected";
+  }
+}
+
 function formatDuration(startTime: number | null): string {
   if (!startTime) return "00:00:00";
   const seconds = Math.floor((Date.now() - startTime) / 1000);
@@ -48,13 +63,19 @@ export function StatusIndicator({ micStatus, systemStatus, startTime, segmentCou
         : micStatus;
 
   return (
-    <div className="flex items-center gap-4 text-xs text-muted-foreground px-4 py-1.5 border-t">
+    <div className="flex items-center gap-5 text-xs text-muted-foreground px-5 py-2 border-t bg-muted/20">
       <div className="flex items-center gap-1.5">
         <div className={cn("w-2 h-2 rounded-full", statusColor(overallStatus))} />
-        <span className="capitalize">{overallStatus}</span>
+        <span className="font-medium">{statusLabel(overallStatus)}</span>
       </div>
-      <span>Duration: {formatDuration(startTime)}</span>
-      <span>Segments: {segmentCount}</span>
+      <div className="flex items-center gap-1">
+        <span className="text-muted-foreground/60">Duration:</span>
+        <span className="font-mono tabular-nums font-medium">{formatDuration(startTime)}</span>
+      </div>
+      <div className="flex items-center gap-1">
+        <span className="text-muted-foreground/60">Segments:</span>
+        <span className="font-mono tabular-nums font-medium">{segmentCount}</span>
+      </div>
     </div>
   );
 }

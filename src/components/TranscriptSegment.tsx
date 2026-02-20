@@ -16,9 +16,18 @@ function formatTime(seconds: number): string {
 
 export function TranscriptSegment({ text, timestamp, isFinal, showTimestamp, fontSize }: Props) {
   return (
-    <div className={cn("py-1 px-2", !isFinal && "italic text-muted-foreground")}>
+    <div
+      className={cn(
+        "py-1.5 px-2 rounded-md leading-relaxed",
+        isFinal
+          ? "text-foreground"
+          : "italic text-muted-foreground bg-muted/30"
+      )}
+    >
       {showTimestamp && (
-        <span className="text-xs text-muted-foreground mr-2 font-mono">{formatTime(timestamp)}</span>
+        <span className="text-[10px] text-muted-foreground/70 mr-2 font-mono tabular-nums align-middle bg-muted/50 px-1 py-0.5 rounded">
+          {formatTime(timestamp)}
+        </span>
       )}
       <span style={{ fontSize: `${fontSize}px` }}>{text}</span>
     </div>

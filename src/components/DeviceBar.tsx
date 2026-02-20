@@ -1,3 +1,4 @@
+import { Mic, Speaker } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -30,11 +31,14 @@ export function DeviceBar({
   const defaultSystem = outputDevices.find((d) => d.is_default)?.id ?? outputDevices[0]?.id ?? "";
 
   return (
-    <div className="flex gap-4 px-4 py-2 border-b bg-muted/30">
-      <div className="flex items-center gap-2 flex-1">
-        <span className="text-sm whitespace-nowrap">Mic:</span>
+    <div className="flex gap-4 px-5 py-2.5 border-b bg-muted/30">
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 text-muted-foreground shrink-0">
+          <Mic className="size-3.5" />
+          <span className="text-xs font-medium uppercase tracking-wide">Mic</span>
+        </div>
         <Select value={selectedMic ?? defaultMic} onValueChange={onMicChange} disabled={disabled}>
-          <SelectTrigger className="flex-1">
+          <SelectTrigger className="flex-1 min-w-0">
             <SelectValue placeholder="Select microphone" />
           </SelectTrigger>
           <SelectContent>
@@ -46,14 +50,17 @@ export function DeviceBar({
           </SelectContent>
         </Select>
       </div>
-      <div className="flex items-center gap-2 flex-1">
-        <span className="text-sm whitespace-nowrap">System:</span>
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 text-muted-foreground shrink-0">
+          <Speaker className="size-3.5" />
+          <span className="text-xs font-medium uppercase tracking-wide">System</span>
+        </div>
         <Select
           value={selectedSystem ?? defaultSystem}
           onValueChange={onSystemChange}
           disabled={disabled}
         >
-          <SelectTrigger className="flex-1">
+          <SelectTrigger className="flex-1 min-w-0">
             <SelectValue placeholder="Select output" />
           </SelectTrigger>
           <SelectContent>

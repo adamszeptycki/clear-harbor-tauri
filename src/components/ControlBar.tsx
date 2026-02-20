@@ -1,3 +1,4 @@
+import { Play, Square, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { save } from "@tauri-apps/plugin-dialog";
 import { exportTranscript } from "@/lib/tauri-commands";
@@ -33,15 +34,26 @@ export function ControlBar({ isRunning, onStart, onStop, segments }: Props) {
   };
 
   return (
-    <div className="flex items-center justify-center gap-4 py-3 border-t">
+    <div className="flex items-center justify-center gap-3 py-3 px-5 border-t bg-card/50">
       {isRunning ? (
-        <Button variant="destructive" onClick={onStop}>
+        <Button variant="destructive" size="lg" onClick={onStop} className="gap-2 min-w-[140px]">
+          <Square className="size-4" />
           Stop
         </Button>
       ) : (
-        <Button onClick={onStart}>Start</Button>
+        <Button size="lg" onClick={onStart} className="gap-2 min-w-[140px]">
+          <Play className="size-4" />
+          Start
+        </Button>
       )}
-      <Button variant="outline" onClick={handleSave} disabled={segments.length === 0}>
+      <Button
+        variant="outline"
+        size="lg"
+        onClick={handleSave}
+        disabled={segments.length === 0}
+        className="gap-2"
+      >
+        <Download className="size-4" />
         Save Transcript
       </Button>
     </div>

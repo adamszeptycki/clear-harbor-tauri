@@ -14,7 +14,7 @@ interface Props {
 
 export function TranscriptView(props: Props) {
   return (
-    <div className="flex gap-4 flex-1 min-h-0 p-4">
+    <div className="flex gap-3 flex-1 min-h-0 px-4 py-3">
       <TranscriptPanel
         label="You"
         colorDot="bg-green-500"

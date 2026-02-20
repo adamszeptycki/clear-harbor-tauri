@@ -1,3 +1,4 @@
+import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,7 +29,8 @@ export function SettingsDialog({ settings, onUpdate }: Props) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
+        <Button variant="ghost" size="sm" className="gap-1.5">
+          <Settings className="size-4" />
           Settings
         </Button>
       </DialogTrigger>
@@ -36,9 +38,11 @@ export function SettingsDialog({ settings, onUpdate }: Props) {
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="space-y-5 pt-2">
           <div className="space-y-2">
-            <Label htmlFor="api-key">Deepgram API Key</Label>
+            <Label htmlFor="api-key" className="text-sm font-medium">
+              Deepgram API Key
+            </Label>
             <Input
               id="api-key"
               type="password"
@@ -48,7 +52,7 @@ export function SettingsDialog({ settings, onUpdate }: Props) {
             />
           </div>
           <div className="space-y-2">
-            <Label>Language</Label>
+            <Label className="text-sm font-medium">Language</Label>
             <Select value={settings.language} onValueChange={(v) => onUpdate({ language: v })}>
               <SelectTrigger>
                 <SelectValue />
@@ -63,8 +67,13 @@ export function SettingsDialog({ settings, onUpdate }: Props) {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label>Font Size: {settings.font_size}px</Label>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">Font Size</Label>
+              <span className="text-xs text-muted-foreground font-mono tabular-nums bg-muted px-1.5 py-0.5 rounded">
+                {settings.font_size}px
+              </span>
+            </div>
             <Slider
               value={[settings.font_size]}
               min={10}
@@ -74,7 +83,7 @@ export function SettingsDialog({ settings, onUpdate }: Props) {
             />
           </div>
           <div className="space-y-2">
-            <Label>Theme</Label>
+            <Label className="text-sm font-medium">Theme</Label>
             <Select
               value={settings.theme}
               onValueChange={(v) => onUpdate({ theme: v as AppSettings["theme"] })}
@@ -89,8 +98,10 @@ export function SettingsDialog({ settings, onUpdate }: Props) {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="timestamps">Show Timestamps</Label>
+          <div className="flex items-center justify-between py-1">
+            <Label htmlFor="timestamps" className="text-sm font-medium">
+              Show Timestamps
+            </Label>
             <Switch
               id="timestamps"
               checked={settings.timestamps_enabled}
