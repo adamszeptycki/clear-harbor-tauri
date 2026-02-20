@@ -52,10 +52,8 @@ impl StreamManager {
         let mic_stop_flag = Arc::new(AtomicBool::new(false));
         let stop_flag_clone = mic_stop_flag.clone();
 
-        // We need sample_rate and channels from the mic config for the resampler.
-        // These are sent back via a oneshot-like crossbeam channel.
-        let (config_tx, config_rx) =
-            crossbeam_channel::bounded::<Result<(u32, u16), String>>(1);
+        // Channel to report mic start errors back to the caller.
+        let (result_tx, result_rx) = crossbeam_channel::bounded::<Result<(), String>>(1);
 
         let mic_device_id_clone = mic_device_id.clone();
         std::thread::spawn(move || {
@@ -63,23 +61,21 @@ impl StreamManager {
             let mic_device = match mic_capture.get_device(mic_device_id_clone.as_deref()) {
                 Ok(d) => d,
                 Err(e) => {
-                    let _ = config_tx.send(Err(e));
+                    let _ = result_tx.send(Err(e));
                     return;
                 }
             };
 
-            let (_stream, stream_config) =
+            let (_stream, _stream_config) =
                 match mic_capture.start_capture(&mic_device, audio_cb_tx) {
                     Ok(s) => s,
                     Err(e) => {
-                        let _ = config_tx.send(Err(e));
+                        let _ = result_tx.send(Err(e));
                         return;
                     }
                 };
 
-            let sample_rate = stream_config.sample_rate.0;
-            let channels = stream_config.channels;
-            let _ = config_tx.send(Ok((sample_rate, channels)));
+            let _ = result_tx.send(Ok(()));
 
             // Keep _stream alive (it captures audio via its callback).
             // Wait until stop flag is set, then drop.
@@ -89,7 +85,7 @@ impl StreamManager {
             // _stream is dropped here, stopping capture.
         });
 
-        let (mic_sample_rate, mic_channels) = config_rx
+        result_rx
             .recv()
             .map_err(|e| format!("Mic config channel error: {}", e))?
             .map_err(|e| format!("Mic capture error: {}", e))?;
@@ -109,8 +105,6 @@ impl StreamManager {
             AudioSource::Mic,
             config1,
             audio_cb_rx,
-            mic_sample_rate,
-            mic_channels as usize,
             mic_shutdown_rx,
         );
 
@@ -133,8 +127,6 @@ impl StreamManager {
                     AudioSource::System,
                     config2,
                     sys_cb_rx,
-                    44100,
-                    1,
                     sys_shutdown_rx,
                 );
             }
@@ -183,8 +175,6 @@ fn spawn_stream_pipeline(
     source: AudioSource,
     config: DeepgramConfig,
     audio_rx: CbReceiver<AudioChunk>,
-    input_sample_rate: u32,
-    input_channels: usize,
     shutdown_rx: mpsc::Receiver<()>,
 ) {
     let (pcm_tx, pcm_rx) = mpsc::channel::<Vec<i16>>(100);
@@ -194,15 +184,22 @@ fn spawn_stream_pipeline(
     // Thread: crossbeam -> resample -> compute level -> tokio channel
     let app_for_level = app_handle.clone();
     std::thread::spawn(move || {
-        let mut resampler = match AudioResampler::new(input_sample_rate, 16000, input_channels) {
-            Ok(r) => r,
-            Err(e) => {
-                error!("{:?} resampler init failed: {}", source, e);
-                return;
-            }
-        };
+        // Lazy-init: create resampler from first chunk's actual sample rate / channels
+        let mut resampler: Option<AudioResampler> = None;
 
         while let Ok(chunk) = audio_rx.recv() {
+            let r = match resampler.as_mut() {
+                Some(r) => r,
+                None => {
+                    match AudioResampler::new(chunk.sample_rate, 16000, chunk.channels as usize) {
+                        Ok(r) => resampler.insert(r),
+                        Err(e) => {
+                            error!("{:?} resampler init failed: {}", source, e);
+                            return;
+                        }
+                    }
+                }
+            };
             // Compute RMS audio level
             let rms = (chunk
                 .samples
@@ -219,7 +216,7 @@ fn spawn_stream_pipeline(
                 },
             );
 
-            match resampler.process(&chunk.samples) {
+            match r.process(&chunk.samples) {
                 Ok(resampled) => {
                     if !resampled.is_empty() {
                         let linear16 = to_linear16(&resampled);
