@@ -1,5 +1,5 @@
 use crossbeam_channel::Sender;
-use log::{error, info};
+use log::info;
 use screencapturekit::prelude::*;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -116,8 +116,8 @@ impl SystemAudioCapture for MacosSystemCapture {
                 .with_width(2)
                 .with_height(2)
                 .with_captures_audio(true)
-                .with_sample_rate(SAMPLE_RATE)
-                .with_channel_count(CHANNELS as u32);
+                .with_sample_rate(SAMPLE_RATE as i32)
+                .with_channel_count(CHANNELS as i32);
 
             let mut stream = SCStream::new(&filter, &config);
 
