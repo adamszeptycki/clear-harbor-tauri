@@ -57,3 +57,56 @@ pub fn export_transcript(
         _ => Err(format!("Unknown format: {}", format)),
     }
 }
+
+#[tauri::command]
+pub fn auto_save_transcript(
+    app_handle: tauri::AppHandle,
+    segments: Vec<crate::transcription::types::TranscriptSegment>,
+) -> Result<(), String> {
+    use tauri::Manager;
+    let path = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?
+        .join("autosave.json");
+    // Ensure the directory exists
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    let json = serde_json::to_string(&segments).map_err(|e| e.to_string())?;
+    std::fs::write(&path, json).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn check_autosave(
+    app_handle: tauri::AppHandle,
+) -> Result<Option<Vec<crate::transcription::types::TranscriptSegment>>, String> {
+    use tauri::Manager;
+    let path = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?
+        .join("autosave.json");
+    if path.exists() {
+        let json = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+        let segments = serde_json::from_str(&json).map_err(|e| e.to_string())?;
+        Ok(Some(segments))
+    } else {
+        Ok(None)
+    }
+}
+
+#[tauri::command]
+pub fn clear_autosave(app_handle: tauri::AppHandle) -> Result<(), String> {
+    use tauri::Manager;
+    let path = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?
+        .join("autosave.json");
+    if path.exists() {
+        std::fs::remove_file(&path).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}

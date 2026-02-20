@@ -25,6 +25,9 @@ pub fn run() {
             commands::start_transcription,
             commands::stop_transcription,
             commands::export_transcript,
+            commands::auto_save_transcript,
+            commands::check_autosave,
+            commands::clear_autosave,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

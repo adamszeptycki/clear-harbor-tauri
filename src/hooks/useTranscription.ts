@@ -1,4 +1,5 @@
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { invoke } from "@tauri-apps/api/core";
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import { startTranscription, stopTranscription } from "@/lib/tauri-commands";
 import type {
@@ -124,6 +125,22 @@ export function useTranscription() {
     };
   }, []);
 
+  // Auto-save transcript every 60 seconds while running
+  useEffect(() => {
+    if (!state.isRunning) return;
+    const interval = setInterval(async () => {
+      const all = [...state.micSegments, ...state.systemSegments];
+      if (all.length > 0) {
+        try {
+          await invoke("auto_save_transcript", { segments: all });
+        } catch (e) {
+          console.error("Auto-save failed:", e);
+        }
+      }
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, [state.isRunning, state.micSegments.length, state.systemSegments.length]);
+
   const start = useCallback(
     async (params: {
       apiKey: string;
@@ -146,6 +163,12 @@ export function useTranscription() {
       await stopTranscription();
     } catch (e) {
       console.error("Stop failed:", e);
+    }
+    // Clear autosave on intentional stop
+    try {
+      await invoke("clear_autosave");
+    } catch (e) {
+      console.error("Clear autosave failed:", e);
     }
     dispatch({ type: "STOP" });
   }, []);
