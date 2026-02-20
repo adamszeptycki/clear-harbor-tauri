@@ -9,6 +9,8 @@
     "store:default",
     "dialog:default",
     "shell:default",
-    "core:event:default"
+    "core:event:default",
+    "fs:default",
+    "fs:allow-write-text-file"
   ]
 }

@@ -35,6 +35,7 @@ chrono = { version = "0.4", features = ["serde"] }
 url = "2"
 log = "0.4"
 env_logger = "0.11"
+tauri-plugin-fs = "2"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 libpulse-binding = "2"
