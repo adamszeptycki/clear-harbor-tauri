@@ -1,6 +1,6 @@
-import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
-import { useCallback, useEffect, useReducer, useRef } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 import { startTranscription, stopTranscription } from "@/lib/tauri-commands";
 import type {
   AudioLevelEvent,
@@ -101,27 +101,38 @@ function reducer(state: TranscriptionState, action: Action): TranscriptionState 
 
 export function useTranscription() {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const unlistenRefs = useRef<UnlistenFn[]>([]);
 
   useEffect(() => {
+    let cancelled = false;
+    const unlistens: (() => void)[] = [];
+
     const setup = async () => {
       const u1 = await listen<TranscriptSegment>("mic-transcript", (e) =>
         dispatch({ type: "MIC_TRANSCRIPT", segment: e.payload }),
       );
+      unlistens.push(u1);
       const u2 = await listen<TranscriptSegment>("system-transcript", (e) =>
         dispatch({ type: "SYSTEM_TRANSCRIPT", segment: e.payload }),
       );
+      unlistens.push(u2);
       const u3 = await listen<ConnectionStatusEvent>("connection-status", (e) =>
         dispatch({ type: "CONNECTION_STATUS", event: e.payload }),
       );
+      unlistens.push(u3);
       const u4 = await listen<AudioLevelEvent>("audio-level", (e) =>
         dispatch({ type: "AUDIO_LEVEL", event: e.payload }),
       );
-      unlistenRefs.current = [u1, u2, u3, u4];
+      unlistens.push(u4);
+
+      if (cancelled) {
+        unlistens.forEach((u) => u());
+      }
     };
     setup();
+
     return () => {
-      unlistenRefs.current.forEach((u) => u());
+      cancelled = true;
+      unlistens.forEach((u) => u());
     };
   }, []);
 
